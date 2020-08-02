@@ -4,6 +4,7 @@
 /* @var $content string */
 
 use backend\assets\AppAsset;
+use common\models\User;
 use yii\helpers\Html;
 use yii\bootstrap\Nav;
 use yii\bootstrap\NavBar;
@@ -29,15 +30,33 @@ AppAsset::register($this);
 <div class="wrap">
     <?php
     NavBar::begin([
-        'brandLabel' => Yii::$app->name,
+        'brandLabel' => 'Админка',
         'brandUrl' => Yii::$app->homeUrl,
         'options' => [
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
+    $nameItemMenu = 'Баланс';
+    /**
+     * @var $flag boolean
+     */
+    $flag = false;
+    if (!Yii::$app->user->isGuest) {
+        /** @var \common\models\User $webUser */
+        $webUser = Yii::$app->user->identity;
+        if ($webUser->status == User::STATUS_ACTIVE && $webUser->role == User::ROLE_USER){
+            $nameItemMenu = 'Мой баланс';
+        }else{
+            $flag = 1;
+            $nameItemMenu = 'Баланс пользователей';
+        }
+    }
     $menuItems = [
-        ['label' => 'Home', 'url' => ['/site/index']],
+        ['label' => $nameItemMenu, 'url' => ['/site/index']],
     ];
+    if ($flag){
+        $menuItems[] = ['label' => 'История пополнений', 'url' => ['/site/history']];
+    }
     if (Yii::$app->user->isGuest) {
         $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];
     } else {

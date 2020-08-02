@@ -3,6 +3,7 @@
 /* @var $this \yii\web\View */
 /* @var $content string */
 
+use common\models\User;
 use yii\helpers\Html;
 use yii\bootstrap\Nav;
 use yii\bootstrap\NavBar;
@@ -35,10 +36,23 @@ AppAsset::register($this);
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
+
+    $nameItemMenu = 'Баланс';
+    if (!Yii::$app->user->isGuest) {
+        /** @var \common\models\User $webUser */
+        $webUser = Yii::$app->user->identity;
+        if ($webUser->status == User::STATUS_ACTIVE && $webUser->role == User::ROLE_USER){
+            $nameItemMenu = 'Мой баланс';
+        }else{
+            $nameItemMenu = 'Баланс пользователей';
+        }
+    }
+
+
     $menuItems = [
-        ['label' => 'Home', 'url' => ['/site/index']],
-        ['label' => 'About', 'url' => ['/site/about']],
-        ['label' => 'Contact', 'url' => ['/site/contact']],
+        ['label' => $nameItemMenu, 'url' => ['/site/index']],
+//        ['label' => 'About', 'url' => ['/site/about']],
+//        ['label' => 'Contact', 'url' => ['/site/contact']],
     ];
     if (Yii::$app->user->isGuest) {
         $menuItems[] = ['label' => 'Signup', 'url' => ['/site/signup']];

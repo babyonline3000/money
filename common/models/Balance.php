@@ -46,7 +46,8 @@ class Balance extends ActiveRecord
     {
         return [
             [['user_id'], 'integer'],
-            [['value'], 'number', 'min' => -1000000, 'max' => 1000000],
+            [['value'], 'default', 'value' => 0],
+            [['value'], 'number', 'min' => 1, 'max' => 1000000],
             [['created_at'], 'string', 'max' => 15],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
 
@@ -85,20 +86,17 @@ class Balance extends ActiveRecord
     }
 
     /**
-     * {@inheritdoc}
-     * @param mixed $value
-     * @param int $user_id
-     * @return boolean
+     * @param $dataProvider
+     * @return int
      */
-    public function addMoney($value, $user_id)
-    {
-        $this->user_id = $user_id;
-        $this->value = $value;
+    public static function getTotalBalance($dataProvider){
+        $totalBalance = 0;
 
-        if(!$this->save()){
-            throw new \yii\base\Exception('Not add money by user.');
+        foreach ($dataProvider as $item){
+            $totalBalance += $item['value'];
         }
 
-        return true;
+        return $totalBalance;
     }
+
 }

@@ -1,6 +1,8 @@
 <?php
 namespace frontend\controllers;
 
+use common\models\Balance;
+use common\models\User;
 use frontend\models\ResendVerificationEmailForm;
 use frontend\models\VerifyEmailForm;
 use Yii;
@@ -78,9 +80,49 @@ class SiteController extends Controller
             return $this->actionLogin();
         }
 
-        \Yii::error( Yii::$app->user->identity );
+        /** @var \common\models\User $webUser */
+        $webUser = Yii::$app->user->identity;
 
-        return $this->render('index');
+        if ($webUser->status == User::STATUS_ACTIVE && $webUser->role == User::ROLE_USER){
+            $this->view->title = 'Мой баланс';
+            $dataProvider = new \yii\data\ActiveDataProvider([
+                'query' => Balance::find()
+                        ->select([
+                            'user_id',
+                            'SUM(value) AS value'
+                        ])
+                        ->groupBy('user_id')
+                        ->with([
+                            'user' => function (\common\models\queries\User $query){
+                                    $query
+                                        ->active();
+                                }
+                        ])
+                        ->andWhere(['user_id' => $webUser->id]),
+                'pagination' => false,
+            ]);
+        }else{
+            $this->view->title = 'Баланс пользователей';
+            $dataProvider = new \yii\data\ActiveDataProvider([
+                'query' => Balance::find()
+                        ->select([
+                            'user_id',
+                            'SUM(value) AS value'
+                        ])
+                        ->groupBy('user_id')
+                        ->with([
+                            'user' => function (\common\models\queries\User $query){
+                                    $query
+                                        ->active();
+                                }
+                        ]),
+                'pagination' => false,
+            ]);
+        }
+
+        return $this->render('index', [
+            'dataProvider' => $dataProvider,
+        ]);
     }
 
     /**
@@ -263,4 +305,5 @@ class SiteController extends Controller
             'model' => $model
         ]);
     }
+
 }

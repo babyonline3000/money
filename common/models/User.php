@@ -31,7 +31,7 @@ class User extends ActiveRecord implements IdentityInterface
     const ROLE_USER = 10;
     const ROLE_ADMIN = 20;
 
-
+    public $sum;
     /**
      * {@inheritdoc}
      */
