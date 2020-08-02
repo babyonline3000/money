@@ -1,0 +1,11 @@
+Options +FollowSymlinks
+
+RewriteEngine On
+
+# Backend application
+RewriteCond %{REQUEST_URI} ^/admin
+RewriteRule ^admin(.*)$ backend/web/$1 [L]
+
+# Frontend application
+RewriteCond %{REQUEST_URI} ^(.*)$
+RewriteRule ^(.*)$ frontend/web/$1 [L]

@@ -9,5 +9,11 @@ return [
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
+        'user' => [
+            'class' => 'yii\web\User',
+            'identityClass' => 'common\models\User',
+            'loginUrl' => ['site/login'],
+            'enableAutoLogin' => true
+        ],
     ],
 ];

@@ -74,6 +74,12 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
+        if (Yii::$app->user->isGuest){
+            return $this->actionLogin();
+        }
+
+        \Yii::error( Yii::$app->user->identity );
+
         return $this->render('index');
     }
 

@@ -3,24 +3,24 @@ namespace common\models;
 
 use Yii;
 use yii\base\NotSupportedException;
-use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
 /**
  * User model
  *
- * @property integer $id
+ * @property int $id
+ * @property string $email
  * @property string $username
+ * @property int $status
+ * @property int $role
+ * @property string $auth_key
  * @property string $password_hash
  * @property string $password_reset_token
  * @property string $verification_token
- * @property string $email
- * @property string $auth_key
- * @property integer $status
- * @property integer $created_at
- * @property integer $updated_at
- * @property string $password write-only password
+ * @property string $created_at
+ * @property string $updated_at
+ * @property string $last_login_at
  */
 class User extends ActiveRecord implements IdentityInterface
 {
@@ -28,13 +28,39 @@ class User extends ActiveRecord implements IdentityInterface
     const STATUS_INACTIVE = 9;
     const STATUS_ACTIVE = 10;
 
+    const ROLE_USER = 10;
+    const ROLE_ADMIN = 20;
+
 
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return '{{%user}}';
+        return '{{%users}}';
+    }
+
+    /**
+     * @return array
+     */
+    public static function statusLabels()
+    {
+        return [
+            self::STATUS_ACTIVE   => 'Активен',
+            self::STATUS_INACTIVE => 'Неактивен',
+            self::STATUS_DELETED  => 'Удалён',
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public static function roleLabels()
+    {
+        return [
+            self::ROLE_USER      => 'Пользователь',
+            self::ROLE_ADMIN     => 'Администратор',
+        ];
     }
 
     /**
@@ -43,7 +69,14 @@ class User extends ActiveRecord implements IdentityInterface
     public function behaviors()
     {
         return [
-            TimestampBehavior::className(),
+            'timestamp' => [
+                'class' => \yii\behaviors\TimestampBehavior::class,
+                'attributes' => [
+                    self::EVENT_BEFORE_INSERT => ['created_at'],
+                    self::EVENT_BEFORE_UPDATE => ['updated_at'],
+                ],
+                'value' => date('Y-m-d H:i:s'),
+            ],
         ];
     }
 
@@ -53,9 +86,51 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
-            ['status', 'default', 'value' => self::STATUS_INACTIVE],
+            [['role'], 'default', 'value' => self::ROLE_USER],
+            [['status'], 'default', 'value' => self::STATUS_INACTIVE],
+            [['role', 'username', 'email'], 'required'],
+            [['username'], 'trim'],
+            [['status', 'role'], 'integer'],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
+            [['role'], 'in', 'range' => [self::ROLE_USER, self::ROLE_ADMIN]],
+            [['username', 'email', 'password_hash', 'password_reset_token', 'verification_token'], 'string', 'max' => 255],
+            [['email'], 'email'],
+            [['auth_key'], 'string', 'max' => 32],
+            [['created_at', 'updated_at', 'last_login_at'], 'string', 'max' => 15],
+            [['email'], 'unique'],
+            [['password_reset_token'], 'unique'],
+
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id'                   => 'ID',
+            'email'                => 'Email',
+            'username'             => 'Имя',
+            'status'               => 'Статус',
+            'role'                 => 'Роль',
+            'auth_key'             => 'Auth Key',
+            'password_hash'        => 'Password Hash',
+            'password_reset_token' => 'Password Reset Token',
+            'verification_token'   => 'Verification Token',
+            'created_at'           => 'Дата создания',
+            'updated_at'           => 'Дата изменения',
+            'last_login_at'        => 'Последний вход',
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     * @return \common\models\queries\User the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new \common\models\queries\User(get_called_class());
     }
 
     /**
@@ -82,7 +157,26 @@ class User extends ActiveRecord implements IdentityInterface
      */
     public static function findByUsername($username)
     {
-        return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
+        return static::find()
+            ->byUsername($username)
+            ->active()
+            ->one()
+            ;
+    }
+
+    /**
+     * Finds user by email
+     *
+     * @param string $email
+     * @return static|null
+     */
+    public static function findByEmail($email)
+    {
+        return static::find()
+            ->byEmail($email)
+            ->active()
+            ->one()
+            ;
     }
 
     /**
@@ -208,5 +302,13 @@ class User extends ActiveRecord implements IdentityInterface
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
+    }
+
+    /**
+     * @return \common\models\queries\Balance
+     */
+    public function getBalances()
+    {
+        return $this->hasMany(Balance::class, ['user_id' => 'id']);
     }
 }
