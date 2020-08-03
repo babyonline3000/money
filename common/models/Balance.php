@@ -45,6 +45,7 @@ class Balance extends ActiveRecord
     public function rules()
     {
         return [
+            [['user_id', 'value'], 'require'],
             [['user_id'], 'integer'],
             [['value'], 'default', 'value' => 0],
             [['value'], 'number', 'min' => 1, 'max' => 1000000],
