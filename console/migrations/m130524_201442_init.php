@@ -32,8 +32,8 @@ class m130524_201442_init extends Migration
 
         $this->createTable('{{%balance}}', [
             'id' => $this->primaryKey(),
-            'user_id' => $this->integer(),
-            'value' => $this->decimal(10,2),
+            'user_id' => $this->integer()->notNull(),
+            'value' => $this->decimal(10,2)->notNull(),
             'created_at' => $this->dateTime()->notNull(),
         ], $tableOptions);
         $this->createIndex('balance_idx_is_value', '{{%balance}}', 'value');
